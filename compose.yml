@@ -47,4 +47,5 @@ services:
 
 volumes:
   redis:
+    name: qlds_redis
   steamapps:

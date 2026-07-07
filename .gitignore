@@ -9,6 +9,11 @@ access.txt
 # guard catches any stray local steamcmd cache placed here by mistake.
 ffa/steamapps/
 
+# --- Redis backups -----------------------------------------------------------
+# Database snapshots from scripts/backup-redis.sh — may contain player data.
+backups/
+*.rdb
+
 # --- OS / editor junk --------------------------------------------------------
 Thumbs.db
 Desktop.ini

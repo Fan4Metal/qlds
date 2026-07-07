@@ -133,6 +133,18 @@ docker compose down
 docker volume rm qlds_redis qlds_steamapps   # names may be prefixed by your project dir
 ```
 
+### Backup & restore the Redis database
+
+```bash
+bash scripts/backup-redis.sh            # writes backups/redis-<timestamp>.rdb
+bash scripts/restore-redis.sh <file>    # stops the stack, restores, restarts
+```
+
+The backup issues a synchronous `SAVE` first so the snapshot is current;
+restore swaps the file directly into the `qlds_redis` volume while the stack is
+down (creating the volume first if needed, so it also works on a fresh server).
+Backups (`backups/`, `*.rdb`) are git-ignored.
+
 ## License / credits
 
 Built on the [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
