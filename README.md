@@ -4,7 +4,7 @@
 
 A Dockerized [Quake Live](https://store.steampowered.com/app/282440/Quake_Live/)
 dedicated server running a **Classic Free-For-All** ruleset, built on the
-[Quake Live Server Standards](https://github.com/quakeliveserverstandards)
+[Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 image with [minqlx](https://github.com/MinoMino/minqlx) plugins and a Redis
 backend.
 
@@ -135,6 +135,6 @@ docker volume rm qlds_redis qlds_steamapps   # names may be prefixed by your pro
 
 ## License / credits
 
-Built on the [Quake Live Server Standards](https://github.com/quakeliveserverstandards)
+Built on the [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 framework and [minqlx](https://github.com/MinoMino/minqlx). Quake Live is a
 trademark of id Software / ZeniMax.

@@ -4,7 +4,7 @@
 
 Выделенный сервер [Quake Live](https://store.steampowered.com/app/282440/Quake_Live/)
 в Docker с режимом **Classic Free-For-All** (все против всех). Собран на базе
-образа [Quake Live Server Standards](https://github.com/quakeliveserverstandards)
+образа [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 с плагинами [minqlx](https://github.com/MinoMino/minqlx) и хранилищем Redis.
 
 ## Требования
@@ -135,6 +135,6 @@ docker volume rm qlds_redis qlds_steamapps   # имена могут быть с
 ## Лицензия / благодарности
 
 Собрано на базе фреймворка
-[Quake Live Server Standards](https://github.com/quakeliveserverstandards) и
+[Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards) и
 [minqlx](https://github.com/MinoMino/minqlx). Quake Live — торговая марка
 id Software / ZeniMax.
