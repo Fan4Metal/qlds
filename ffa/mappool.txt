@@ -47,3 +47,4 @@ windsongkeep|ffa
 karist|ffa
 darkgrounds|ffa
 cobaltstation|ffa
+hellsgatekaboom|ffa
