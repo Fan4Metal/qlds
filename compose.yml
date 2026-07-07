@@ -1,0 +1,50 @@
+services:
+  # One-shot init: download Workshop items from workshop.txt into the shared
+  # `steamapps` volume with steamcmd. The QL server's own downloader is
+  # unreliable (hangs at 0% / "EResult code 2"), so we fetch them here instead.
+  # steamcmd skips items already present, so this is fast after the first run.
+  workshop:
+    image: steamcmd/steamcmd:latest
+    entrypoint: ["bash", "/download-workshop.sh"]
+    restart: "no"
+    volumes:
+      - steamapps:/data/steamapps
+      - ./ffa/workshop.txt:/workshop.txt:ro
+      - ./scripts/download-workshop.sh:/download-workshop.sh:ro
+
+  ffa:
+    image: quakeliveserverstandards/ql-server
+    restart: always
+    ports:
+      - 27960:27960/udp # game port
+      - 27960:27960/tcp # stats port
+      - 28960:28960 # rcon port
+    environment:
+      - NET_PORT=27960
+    volumes:
+      - ./access.txt:/home/steam/ql/baseq3/access.txt:ro
+      - ./ffa/autoexec.cfg:/home/steam/ql/baseq3/autoexec.cfg:ro
+      - ./ffa/secret.cfg:/home/steam/ql/baseq3/secret.cfg:ro
+      - ./ffa/server.cfg:/home/steam/ql/baseq3/server.cfg:ro
+      - ./ffa/mappool.txt:/home/steam/ql/baseq3/mappool.txt:ro
+      - ./ffa/minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
+      - ./ffa/workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
+      # Workshop content pre-fetched by the `workshop` service (read-only here).
+      # The steamcmd-written manifest marks the items as installed, so the QL
+      # server skips its own (unreliable) download.
+      - steamapps:/home/steam/ql/steamapps:ro
+    depends_on:
+      workshop:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis:/data
+
+volumes:
+  redis:
+  steamapps:

@@ -1,0 +1,18 @@
+# --- Secrets & personal data -------------------------------------------------
+# Local, untracked. Copy the matching *.example file and fill in your values.
+ffa/secret.cfg
+access.txt
+
+# --- Steam Workshop content --------------------------------------------------
+# The server downloads Workshop items (IDs in ffa/workshop.txt) at startup into
+# the `steamapps` Docker volume, so no content lives in the working tree. This
+# guard catches any stray local steamcmd cache placed here by mistake.
+ffa/steamapps/
+
+# --- OS / editor junk --------------------------------------------------------
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,10 @@
+# Access list for minqlx (admins / mods / bans).
+#
+# Copy this file to access.txt and add your own entries.
+# Be sure to run /reload_access if editing this file while the server is running.
+# The server will overwrite your changes on map exit and shutdown, so edit it
+# via in-game commands (!admin, !mod, !ban) once the server is up.
+#
+# 1 entry per line, format: steamid|(mod|admin|ban)
+# ex: 76561198072786081|ban
+00000000000000000|admin
