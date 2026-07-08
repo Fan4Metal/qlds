@@ -1,9 +1,10 @@
-# Access list for minqlx (admins / mods / bans).
+# Quake Live server access list — the server's own admin / mod / ban list,
+# referenced by g_accessFile in ffa/server.cfg. This is separate from minqlx
+# permissions (those live in Redis and use qlx_owner / !admin / !mod).
 #
 # Copy this file to access.txt and add your own entries.
-# Be sure to run /reload_access if editing this file while the server is running.
-# The server will overwrite your changes on map exit and shutdown, so edit it
-# via in-game commands (!admin, !mod, !ban) once the server is up.
+# Run reload_access if editing while the server is running; the server may also
+# rewrite this file on map exit / shutdown.
 #
 # 1 entry per line, format: steamid|(mod|admin|ban)
 # ex: 76561198072786081|ban
