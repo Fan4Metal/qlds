@@ -162,6 +162,15 @@ workshop init and all mounts stay as in [compose.yml](compose.yml). Version pins
 image must be rebuilt to pick up QL/minqlx updates, and you should test a build
 before relying on it.
 
+**Disk requirements.** The build downloads the full QL dedicated server (~1.5 GB)
+and needs headroom to extract it, compile minqlx and store the image layers.
+Budget **at least ~6 GB free disk** for the build; the resulting image is ~2 GB.
+A small VM (e.g. an 8–9 GB disk already holding the prebuilt image) will run out
+of space and steamcmd fails with a misleading `Missing configuration` error.
+Check with `df -h` and reclaim space with `docker builder prune -af` if needed
+(never `docker system prune --volumes` — it would delete the `qlds_redis`
+database volume).
+
 ## License / credits
 
 Built on the [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
