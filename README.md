@@ -119,6 +119,34 @@ Use minqlx commands in-game (default prefix `!`). A few common ones:
 The server may rewrite `access.txt` on map exit/shutdown, so prefer managing
 access via in-game commands once it's running.
 
+## Stats & ELO (qlstats.net)
+
+[qlstats.net](https://qlstats.net) tracks player stats and provides the FFA ELO
+that the `balance` plugin uses for `!elo` and team balancing. The config already
+points at it (`qlx_balanceUrl "qlstats.net"`, `qlx_balanceUseLocal "0"`), but the
+server must be **registered** so the qlstats feeder connects to it and collects
+live stats.
+
+Prerequisites (already set in this repo):
+
+- `zmq_stats_enable "1"` and a `zmq_stats_password` (in `ffa/secret.cfg`).
+- The ZMQ stats port reachable from the internet. Here stats run over **TCP
+  27960** (the same number as the game port), which [compose.yml](compose.yml)
+  already publishes — open it on the host firewall too.
+
+Registration:
+
+1. On <https://qlstats.net>, click the **Add server** button (it opens the
+   server registration panel; the panel's own URL may change over time).
+2. Enter `<your-server-ip>:27960` and the `zmq_stats_password` from `ffa/secret.cfg`.
+3. Submit. The feeder connects to the stats socket; ELO appears after a few
+   tracked games.
+
+To re-check after changing settings, click the port on that page (it prefills
+`server:port`), enter only the current ZMQ Stats Password and submit again. A
+`can't connect` error usually means `zmq_stats_enable` is not `1`, the port is
+closed, or the password / ip / port do not match.
+
 ## Data & persistence
 
 Two named Docker volumes hold state:
