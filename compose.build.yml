@@ -1,0 +1,14 @@
+# Opt-in override to build the QL server image locally from ./Dockerfile instead
+# of pulling quakeliveserverstandards/ql-server. Merge it on top of compose.yml:
+#
+#   docker compose -f compose.yml -f compose.build.yml build
+#   docker compose -f compose.yml -f compose.build.yml up -d
+#
+# Everything else (redis, the workshop init service, volumes, mounts) comes from
+# compose.yml unchanged.
+services:
+  ffa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qlds/ql-server:local

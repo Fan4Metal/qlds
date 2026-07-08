@@ -145,6 +145,23 @@ restore swaps the file directly into the `qlds_redis` volume while the stack is
 down (creating the volume first if needed, so it also works on a fresh server).
 Backups (`backups/`, `*.rdb`) are git-ignored.
 
+## Building your own server image (optional)
+
+By default `ffa` pulls the prebuilt `quakeliveserverstandards/ql-server` image.
+If you prefer to build the engine + minqlx yourself (pinned versions, slimmer
+image), a [Dockerfile](Dockerfile) and an opt-in override are provided:
+
+```bash
+docker compose -f compose.yml -f compose.build.yml build
+docker compose -f compose.yml -f compose.build.yml up -d
+```
+
+`compose.build.yml` only adds a `build:` to the `ffa` service — redis, the
+workshop init and all mounts stay as in [compose.yml](compose.yml). Version pins
+(base image, minqlx, plugins) live at the top of the Dockerfile. Note: a custom
+image must be rebuilt to pick up QL/minqlx updates, and you should test a build
+before relying on it.
+
 ## License / credits
 
 Built on the [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)

@@ -1,0 +1,5 @@
+# The Dockerfile builds everything from upstream sources and COPYs nothing from
+# the build context, so keep the context tiny — only the Dockerfile is needed.
+*
+
+!Dockerfile
