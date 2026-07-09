@@ -2,7 +2,7 @@
 This is a plugin for minqlx created by Metal Fan (fan4_metal@mail.ru)
 Copyright (c) 2025 Metal Fan
 
-Version 0.5
+Version 0.6
 
 Its purpose is to display welcome message and some information about the players.
 """
@@ -19,6 +19,24 @@ SPECIAL_WELCOME_MESSAGES_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "special_welcome_messages.json"
 )
 
+# Ключ рейтинга на qlstats.net соответствует короткому имени режима (self.game.type_short).
+# instagib_ffa_pql — это фабрика режима FFA, поэтому type_short == "ffa" и рейтинг
+# берётся из того же ключа "ffa" (отдельного инстагиб-рейтинга на qlstats нет).
+# Здесь задаём только «красивые» подписи для чата.
+GAMETYPE_LABELS = {
+    "ffa": "FFA",
+    "duel": "Duel",
+    "ca": "CA",
+    "ctf": "CTF",
+    "tdm": "TDM",
+    "ft": "FT",
+    "ad": "AD",
+    "dom": "DOM",
+}
+
+# Поддерживаемые qlstats-эндпоинты рейтинга: "elo" (классический) и "elo_b" (B-Elo, «elo-B»).
+VALID_ELO_TYPES = ("elo", "elo_b")
+
 
 class welcome_stats(minqlx.Plugin):
     def __init__(self):
@@ -29,6 +47,10 @@ class welcome_stats(minqlx.Plugin):
         # Cvar для включения/отключения кастомных приветственных сообщений.
         # Установить 0 в конфиге сервера, чтобы отключить: set qlx_wsSpecialMsg "0"
         self.set_cvar_once("qlx_wsSpecialMsg", "1")
+
+        # Тип рейтинга qlstats: "elo" (классический) или "elo_b" (B-Elo, «elo-B»).
+        # Сменить в конфиге сервера: set qlx_wsEloType "elo_b"
+        self.set_cvar_once("qlx_wsEloType", "elo")
 
         # Правильная регистрация команды!
         self.add_command(("info", "stats"), self.cmd_info, usage="<id | steam_id>")
@@ -68,16 +90,22 @@ class welcome_stats(minqlx.Plugin):
         sid = player.steam_id
         name = player.clean_name
 
+        # Режим и тип рейтинга читаем в основном потоке (доступ к self.game).
+        gametype = self.current_gametype()
+        gt_label = self.gametype_label(gametype)
+        elo_type = self.elo_type()
+        elo_label = self.elo_label(elo_type)
+
         @minqlx.thread
         def fetch():
-            data = self.get_ffa_data(sid)
+            data = self.get_elo_data(sid, gametype, elo_type)
             if not data:
-                msg = f"^7Welcome, ^5{name}^7! Tracked games: ^1—^7, FFA ELO: ^1—"
+                msg = f"^7Welcome, ^5{name}^7! Tracked games: ^1—^7, {gt_label} {elo_label}: ^1—"
             else:
                 games = data["games"]
                 elo = data["elo"]
                 elo_str = f"^3{elo:^4}^7" if elo != "—" else "^1—^7"
-                msg = f"^7Welcome, ^5{name}^7! Tracked games: ^2{games}^7, FFA ELO: {elo_str}"
+                msg = f"^7Welcome, ^5{name}^7! Tracked games: ^2{games}^7, {gt_label} {elo_label}: {elo_str}"
             self.chat_reply(msg)
 
             if self.get_cvar("qlx_wsSpecialMsg", bool):
@@ -134,16 +162,22 @@ class welcome_stats(minqlx.Plugin):
         return minqlx.RET_STOP_EVENT
 
     def show_stats(self, steam_id, name):
+        # Режим и тип рейтинга читаем в основном потоке (доступ к self.game).
+        gametype = self.current_gametype()
+        gt_label = self.gametype_label(gametype)
+        elo_type = self.elo_type()
+        elo_label = self.elo_label(elo_type)
+
         @minqlx.thread
         def fetch():
-            data = self.get_ffa_data(steam_id)
+            data = self.get_elo_data(steam_id, gametype, elo_type)
             if not data:
-                msg = f"^5{name}^7 (^3{steam_id}^7) — ^1no FFA data on qlstats.net"
+                msg = f"^5{name}^7 (^3{steam_id}^7) — ^1no {gt_label} data on qlstats.net"
             else:
                 games = data["games"]
                 elo = data["elo"]
                 elo_str = f"^3{elo:^4}^7" if elo != "—" else "^1—^7"
-                msg = f"^5{name}^7 => Tracked games: ^2{games}^7, FFA ELO: {elo_str}"
+                msg = f"^5{name}^7 => Tracked games: ^2{games}^7, {gt_label} {elo_label}: {elo_str}"
             self.chat_reply(msg)
 
         fetch()
@@ -169,13 +203,47 @@ class welcome_stats(minqlx.Plugin):
     def delayed_center_print(self, player, message, **format_kwargs):
         self.center_print(player, message, **format_kwargs)
 
-    def get_ffa_data(self, steam_id):
+    def current_gametype(self):
+        """Короткое имя текущего режима (qlstats-ключ), например "ffa" или "duel".
+
+        Возвращает "ffa" как запасной вариант, если игра ещё не запущена.
+        """
+        game = self.game
+        if game is None:
+            return "ffa"
         try:
-            r = requests.get(f"http://qlstats.net/elo/{steam_id}", timeout=6)
+            return game.type_short or "ffa"
+        except Exception:
+            return "ffa"
+
+    def gametype_label(self, gametype):
+        """«Красивая» подпись режима для чата (с пометкой Insta для инстагиба)."""
+        base = GAMETYPE_LABELS.get(gametype, gametype.upper())
+        game = self.game
+        factory = (getattr(game, "factory", "") or "") if game else ""
+        if "insta" in factory.lower():
+            return "Insta" + base
+        return base
+
+    def elo_type(self):
+        """Тип рейтинга qlstats из cvar: "elo" или "elo_b"."""
+        value = (self.get_cvar("qlx_wsEloType") or "elo").strip().lower()
+        return value if value in VALID_ELO_TYPES else "elo"
+
+    def elo_label(self, elo_type):
+        return "B-ELO" if elo_type == "elo_b" else "ELO"
+
+    def get_elo_data(self, steam_id, gametype, elo_type):
+        try:
+            r = requests.get(f"http://qlstats.net/{elo_type}/{steam_id}", timeout=6)
             if r.status_code != 200:
                 return None
             player = r.json().get("players", [{}])[0]
-            ffa = player.get("ffa", {})
-            return {"games": ffa.get("games", 0), "elo": ffa.get("elo", "—")}
+            stats = player.get(gametype, {})
+            # Ключ режима может присутствовать, но с elo == null — трактуем как "—",
+            # иначе f"{elo:^4}" в потоке упадёт с TypeError и приветствие не отправится.
+            elo = stats.get("elo")
+            games = stats.get("games") or 0
+            return {"games": games, "elo": elo if elo is not None else "—"}
         except Exception:
             return None
