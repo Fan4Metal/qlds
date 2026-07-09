@@ -4,6 +4,10 @@ ffa/secret.cfg
 instagib_ffa_pql/secret.cfg
 access.txt
 
+# Local Compose overrides (e.g. COMPOSE_PROFILES=instagib to enable the second
+# server by default). Personal per-host toggle, not committed.
+.env
+
 # --- Steam Workshop content --------------------------------------------------
 # The server downloads Workshop items (IDs in ffa/workshop.txt) at startup into
 # the `steamapps` Docker volume, so no content lives in the working tree. This

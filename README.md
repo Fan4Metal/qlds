@@ -9,13 +9,13 @@ image with [minqlx](https://github.com/MinoMino/minqlx) plugins and a Redis
 backend. Two servers are provided, sharing one Redis and one Steam Workshop
 volume:
 
-| Server | Ruleset | Config | Compose file |
-|--------|---------|--------|--------------|
-| `ffa` | Classic Free-For-All | [ffa/](ffa/) | [compose.yml](compose.yml) |
-| `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | [compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) |
+| Server | Ruleset | Config | Enabled |
+|--------|---------|--------|---------|
+| `ffa` | Classic Free-For-All | [ffa/](ffa/) | always (default) |
+| `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | `instagib` Compose profile |
 
-The FFA server runs on its own from [compose.yml](compose.yml); the instagib
-server is added by merging the second compose file on top (see
+Both servers are defined in [compose.yml](compose.yml). The FFA server starts by
+default; the instagib server is opt-in via the `instagib` Compose profile (see
 [Running both servers](#running-both-servers)).
 
 ## Requirements
@@ -45,18 +45,27 @@ Stop with `docker compose down` (Redis data survives in the `redis` volume).
 
 ### Running both servers
 
-The instagib server lives in a separate compose file that **merges on top of**
-[compose.yml](compose.yml) — the shared `workshop` init service, `redis`, and
-the named volumes come from the base file; the second file only adds the
-`instagib_ffa_pql` service:
+Both servers are defined in [compose.yml](compose.yml). The instagib server is
+assigned the `instagib` Compose **profile**, so it stays off unless you enable
+it:
 
 ```bash
-docker compose -f compose.yml -f compose.instagib_ffa_pql.yml up -d
+docker compose up -d                        # FFA only (default)
+docker compose --profile instagib up -d     # FFA + instagib
 ```
 
-Use this same `-f compose.yml -f compose.instagib_ffa_pql.yml` prefix for the
-other lifecycle commands too (`logs`, `down`, …). Running plain `docker compose
-up -d` starts the FFA server only.
+To enable it by default without passing the flag every time, set the profile in
+a local `.env` next to `compose.yml` (git-ignored):
+
+```dotenv
+# .env
+COMPOSE_PROFILES=instagib
+```
+
+Then a plain `docker compose up -d` starts both. Note that `docker compose up -d`
+without the profile does **not** stop an already-running instagib server — stop
+it explicitly with `docker compose --profile instagib down` (or
+`docker compose stop instagib_ffa_pql`).
 
 ## Configuration layout
 
@@ -66,8 +75,7 @@ below shows the FFA server; the instagib server mirrors it.
 
 | File | Purpose |
 |------|---------|
-| [compose.yml](compose.yml) | FFA service + shared `workshop`/`redis` services, volumes |
-| [compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) | Adds the instagib server (merge on top of `compose.yml`) |
+| [compose.yml](compose.yml) | Both server services (instagib behind the `instagib` profile), shared `workshop`/`redis`, volumes |
 | [ffa/server.cfg](ffa/server.cfg) | QLDS standards base config (Redis, floodprotect, master) |
 | [ffa/autoexec.cfg](ffa/autoexec.cfg) | Gameplay: map cycle, voting, warmup, branding, minqlx |
 | `ffa/secret.cfg` | **Secrets & personal data** (git-ignored) — passwords, `qlx_owner`, hostname, branding |
@@ -118,9 +126,8 @@ Find your SteamID64 at [steamid.io](https://steamid.io/).
 | `instagib_ffa_pql` | 27961 | TCP | ZMQ stats |
 | `instagib_ffa_pql` | 28961 | TCP | ZMQ rcon |
 
-Adjust the mappings in [compose.yml](compose.yml) /
-[compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) if you need
-different external ports.
+Adjust the mappings in [compose.yml](compose.yml) if you need different external
+ports.
 
 ## Maps & Steam Workshop
 
