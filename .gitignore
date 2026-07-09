@@ -2,18 +2,16 @@
 # Local, untracked. Copy the matching *.example file and fill in your values.
 ffa/secret.cfg
 instagib_ffa_pql/secret.cfg
+duel/secret.cfg
 access.txt
 
-# Local Compose overrides (e.g. COMPOSE_PROFILES=instagib to enable the second
-# server by default). Personal per-host toggle, not committed.
-.env
-
 # --- Steam Workshop content --------------------------------------------------
-# The server downloads Workshop items (IDs in ffa/workshop.txt) at startup into
-# the `steamapps` Docker volume, so no content lives in the working tree. This
-# guard catches any stray local steamcmd cache placed here by mistake.
+# The server downloads Workshop items (IDs in workshop.txt) at startup into the
+# `steamapps` Docker volume, so no content lives in the working tree. This guard
+# catches any stray local steamcmd cache placed here by mistake.
 ffa/steamapps/
 instagib_ffa_pql/steamapps/
+duel/steamapps/
 
 # --- Redis backups -----------------------------------------------------------
 # Database snapshots from scripts/backup-redis.sh — may contain player data.

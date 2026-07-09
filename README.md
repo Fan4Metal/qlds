@@ -9,14 +9,17 @@ image with [minqlx](https://github.com/MinoMino/minqlx) plugins and a Redis
 backend. Two servers are provided, sharing one Redis and one Steam Workshop
 volume:
 
-| Server | Ruleset | Config | Enabled |
+| Server | Ruleset | Config | Profile |
 |--------|---------|--------|---------|
-| `ffa` | Classic Free-For-All | [ffa/](ffa/) | always (default) |
-| `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | `instagib` Compose profile |
+| `ffa` | Classic Free-For-All | [ffa/](ffa/) | `ffa` (or `ffa_all`, `all`) |
+| `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | `instagib` (or `ffa_all`, `all`) |
+| `duel` | Duel (stock, no gameplay mods) | [duel/](duel/) | `duel` (or `all`) |
 
-Both servers are defined in [compose.yml](compose.yml). The FFA server starts by
-default; the instagib server is opt-in via the `instagib` Compose profile (see
-[Running both servers](#running-both-servers)).
+All three servers are defined in [compose.yml](compose.yml) and gated by Compose
+profiles: `ffa`, `instagib`, `duel` (one server each), `ffa_all` (both FFA
+servers), or `all` (every server). Which ones start by default is set by
+`COMPOSE_PROFILES` in [.env](.env) — shipped as `ffa` (see
+[Running the servers](#running-the-servers)).
 
 ## Requirements
 
@@ -29,6 +32,7 @@ default; the instagib server is opt-in via the `instagib` Compose profile (see
 # 1. Provide your secrets and access list (all are git-ignored)
 cp ffa/secret.cfg.example ffa/secret.cfg
 cp instagib_ffa_pql/secret.cfg.example instagib_ffa_pql/secret.cfg
+cp duel/secret.cfg.example duel/secret.cfg
 cp access.txt.example access.txt
 
 # 2. Edit the secret.cfg files -> set passwords, your SteamID64 (qlx_owner) and hostname
@@ -43,41 +47,47 @@ docker compose logs -f ffa
 
 Stop with `docker compose down` (Redis data survives in the `redis` volume).
 
-### Running both servers
+### Running the servers
 
-Both servers are defined in [compose.yml](compose.yml). The instagib server is
-assigned the `instagib` Compose **profile**, so it stays off unless you enable
-it:
+Each game server has its own Compose **profile** — `ffa`, `instagib` and `duel`.
+The two FFA servers also share `ffa_all`, and every server belongs to `all`.
+(`redis` and the `workshop` init service have no profile, so they always run.)
+Choose what starts:
 
 ```bash
-docker compose up -d                        # FFA only (default)
-docker compose --profile instagib up -d     # FFA + instagib
+docker compose --profile ffa up -d          # FFA only
+docker compose --profile instagib up -d     # instagib only
+docker compose --profile duel up -d         # duel only
+docker compose --profile ffa_all up -d      # both FFA servers (ffa + instagib)
+docker compose --profile all up -d          # all three
 ```
 
-To enable it by default without passing the flag every time, set the profile in
-a local `.env` next to `compose.yml` (git-ignored):
+The default for a plain `docker compose up -d` (no `--profile`) comes from
+`COMPOSE_PROFILES` in [.env](.env), shipped as `ffa`. Change it to start
+something else by default:
 
 ```dotenv
 # .env
-COMPOSE_PROFILES=instagib
+COMPOSE_PROFILES=all        # all servers; or `duel`, or `ffa,duel`, etc.
 ```
 
-Then a plain `docker compose up -d` starts both. Note that `docker compose up -d`
-without the profile does **not** stop an already-running instagib server — stop
-it explicitly with `docker compose --profile instagib down` (or
-`docker compose stop instagib_ffa_pql`).
+A CLI `--profile` overrides the `.env` value. Note that starting a different
+profile set does **not** stop servers already running from a previous set — stop
+those explicitly, e.g. `docker compose --profile all down` or
+`docker compose stop duel`.
 
 ## Configuration layout
 
 Each server keeps its config in its own directory ([ffa/](ffa/),
-[instagib_ffa_pql/](instagib_ffa_pql/)) with the same file layout; the
-[minqlx-plugins/](minqlx-plugins/) directory, [workshop.txt](workshop.txt) and
-`access.txt` are shared. The table below shows the FFA server; the instagib
-server mirrors it.
+[instagib_ffa_pql/](instagib_ffa_pql/), [duel/](duel/)) with the same file
+layout; the [minqlx-plugins/](minqlx-plugins/) directory,
+[workshop.txt](workshop.txt) and `access.txt` are shared. The table below shows
+the FFA server; the other servers mirror it.
 
 | File | Purpose |
 |------|---------|
-| [compose.yml](compose.yml) | Both server services (instagib behind the `instagib` profile), shared `workshop`/`redis`, volumes |
+| [compose.yml](compose.yml) | Both server services (each behind a Compose profile), shared `workshop`/`redis`, volumes |
+| [.env](.env) | Default Compose profiles — which servers a plain `docker compose up` starts |
 | [ffa/server.cfg](ffa/server.cfg) | QLDS standards base config (Redis, floodprotect, master) |
 | [ffa/autoexec.cfg](ffa/autoexec.cfg) | Gameplay: map cycle, voting, warmup, branding, minqlx |
 | `ffa/secret.cfg` | **Secrets & personal data** (git-ignored) — passwords, `qlx_owner`, hostname, branding |
@@ -91,8 +101,10 @@ server mirrors it.
 The instagib server adds one file the FFA server does not need — a custom game
 factory, [instagib_ffa_pql/instagib_ffa_pql.factories](instagib_ffa_pql/instagib_ffa_pql.factories)
 (the PQL Instagib ruleset), mounted into `baseq3/scripts/` where Quake Live
-loads `*.factories`. It also uses a separate Redis logical database
-(`qlx_redisDatabase "1"`) so its bans and stats stay isolated from FFA.
+loads `*.factories`. The duel server needs no such file — it runs the **stock
+`duel` factory** with no gameplay cvars, so it plays vanilla. Each server uses a
+separate Redis logical database (`qlx_redisDatabase` = `0` for FFA, `1` for
+instagib, `2` for duel) so bans and stats stay isolated.
 
 `autoexec.cfg` runs at startup and, as its **last** step, executes `secret.cfg`,
 so the values there override anything set earlier. This keeps all secrets and
@@ -103,7 +115,7 @@ personal identifiers in a single untracked file per server.
 Nothing sensitive is committed. Everything private lives in git-ignored files
 created from their `*.example` templates:
 
-**`ffa/secret.cfg`** and **`instagib_ffa_pql/secret.cfg`** (one per server)
+**`ffa/secret.cfg`**, **`instagib_ffa_pql/secret.cfg`** and **`duel/secret.cfg`** (one per server)
 - `zmq_rcon_password` / `zmq_stats_password` — rcon & stats API passwords
 - `sv_privatePassword` — password for the reserved player slots
 - `qlx_owner` — your SteamID64 (minqlx refuses admin commands without it)
@@ -127,6 +139,9 @@ Find your SteamID64 at [steamid.io](https://steamid.io/).
 | `instagib_ffa_pql` | 27961 | UDP | Game traffic |
 | `instagib_ffa_pql` | 27961 | TCP | ZMQ stats |
 | `instagib_ffa_pql` | 28961 | TCP | ZMQ rcon |
+| `duel` | 27962 | UDP | Game traffic |
+| `duel` | 27962 | TCP | ZMQ stats |
+| `duel` | 28962 | TCP | ZMQ rcon |
 
 Adjust the mappings in [compose.yml](compose.yml) if you need different external
 ports.
@@ -200,8 +215,9 @@ To re-check after changing settings, click the port on that page (it prefills
 `can't connect` error usually means `zmq_stats_enable` is not `1`, the port is
 closed, or the password / ip / port do not match.
 
-Register each server separately: the instagib server uses **TCP 27961** and the
-`zmq_stats_password` from `instagib_ffa_pql/secret.cfg`.
+Register each server separately, each with its own `zmq_stats_password`: the
+instagib server uses **TCP 27961** (`instagib_ffa_pql/secret.cfg`) and the duel
+server **TCP 27962** (`duel/secret.cfg`).
 
 ## Data & persistence
 

@@ -14,6 +14,7 @@ services:
 
   ffa:
     image: quakeliveserverstandards/ql-server
+    profiles: ["ffa", "ffa_all", "all"]
     restart: always
     ports:
       - 27960:27960/udp # game port
@@ -41,13 +42,19 @@ services:
       redis:
         condition: service_started
 
-  # Second game server: PQL Instagib FFA. Opt-in via the `instagib` profile so a
-  # plain `docker compose up -d` starts only the FFA server:
-  #   docker compose --profile instagib up -d      # FFA + instagib
-  # or set COMPOSE_PROFILES=instagib in a local .env to make it the default.
+  # Second game server: PQL Instagib FFA.
+  #
+  # Each game server is gated by profiles (redis + the workshop init service have
+  # none, so they always run). Pick which servers start via profiles:
+  #   docker compose --profile ffa up -d        # FFA only
+  #   docker compose --profile instagib up -d   # instagib only
+  #   docker compose --profile duel up -d       # duel only
+  #   docker compose --profile ffa_all up -d    # both FFA servers (ffa + instagib)
+  #   docker compose --profile all up -d        # all three
+  # The default when no --profile is given comes from COMPOSE_PROFILES in .env.
   instagib_ffa_pql:
     image: quakeliveserverstandards/ql-server
-    profiles: ["instagib"]
+    profiles: ["instagib", "ffa_all", "all"]
     restart: always
     ports:
       - 27961:27961/udp # game port
@@ -67,6 +74,34 @@ services:
       - ./workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
       # Custom game factory: QL loads *.factories from baseq3/scripts/.
       - ./instagib_ffa_pql/instagib_ffa_pql.factories:/home/steam/ql/baseq3/scripts/instagib_ffa_pql.factories:ro
+      - steamapps:/home/steam/ql/steamapps:ro
+    depends_on:
+      workshop:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+
+  # Third game server: vanilla Duel. Stock `duel` factory, no custom .factories
+  # and no gameplay cvars — plays exactly like default Quake Live duel.
+  duel:
+    image: quakeliveserverstandards/ql-server
+    profiles: ["duel", "all"]
+    restart: always
+    ports:
+      - 27962:27962/udp # game port
+      - 27962:27962/tcp # stats port
+      - 28962:28962 # rcon port
+    environment:
+      - NET_PORT=27962
+    volumes:
+      - ./access.txt:/home/steam/ql/baseq3/access.txt:ro
+      - ./duel/autoexec.cfg:/home/steam/ql/baseq3/autoexec.cfg:ro
+      - ./duel/secret.cfg:/home/steam/ql/baseq3/secret.cfg:ro
+      - ./duel/server.cfg:/home/steam/ql/baseq3/server.cfg:ro
+      - ./duel/mappool.txt:/home/steam/ql/baseq3/mappool.txt:ro
+      # Shared with the other servers (see ./minqlx-plugins, ./workshop.txt).
+      - ./minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
+      - ./workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
       - steamapps:/home/steam/ql/steamapps:ro
     depends_on:
       workshop:
