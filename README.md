@@ -1,12 +1,22 @@
-# Quake Live Dedicated Server — Classic FFA
+# Quake Live Dedicated Server
 
 **English** · [Русский](README.ru.md)
 
-A Dockerized [Quake Live](https://store.steampowered.com/app/282440/Quake_Live/)
-dedicated server running a **Classic Free-For-All** ruleset, built on the
+Dockerized [Quake Live](https://store.steampowered.com/app/282440/Quake_Live/)
+dedicated servers, built on the
 [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 image with [minqlx](https://github.com/MinoMino/minqlx) plugins and a Redis
-backend.
+backend. Two servers are provided, sharing one Redis and one Steam Workshop
+volume:
+
+| Server | Ruleset | Config | Compose file |
+|--------|---------|--------|--------------|
+| `ffa` | Classic Free-For-All | [ffa/](ffa/) | [compose.yml](compose.yml) |
+| `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | [compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) |
+
+The FFA server runs on its own from [compose.yml](compose.yml); the instagib
+server is added by merging the second compose file on top (see
+[Running both servers](#running-both-servers)).
 
 ## Requirements
 
@@ -16,14 +26,15 @@ backend.
 ## Quick start
 
 ```bash
-# 1. Provide your secrets and access list (both are git-ignored)
+# 1. Provide your secrets and access list (all are git-ignored)
 cp ffa/secret.cfg.example ffa/secret.cfg
+cp instagib_ffa_pql/secret.cfg.example instagib_ffa_pql/secret.cfg
 cp access.txt.example access.txt
 
-# 2. Edit ffa/secret.cfg  -> set passwords, your SteamID64 (qlx_owner) and hostname
-# 3. Edit access.txt      -> set your SteamID64 as admin
+# 2. Edit the secret.cfg files -> set passwords, your SteamID64 (qlx_owner) and hostname
+# 3. Edit access.txt           -> set your SteamID64 as admin
 
-# 4. Start it
+# 4. Start it (see "Running both servers" to add the instagib server)
 docker compose up -d
 
 # View logs / follow startup
@@ -32,11 +43,31 @@ docker compose logs -f ffa
 
 Stop with `docker compose down` (Redis data survives in the `redis` volume).
 
+### Running both servers
+
+The instagib server lives in a separate compose file that **merges on top of**
+[compose.yml](compose.yml) — the shared `workshop` init service, `redis`, and
+the named volumes come from the base file; the second file only adds the
+`instagib_ffa_pql` service:
+
+```bash
+docker compose -f compose.yml -f compose.instagib_ffa_pql.yml up -d
+```
+
+Use this same `-f compose.yml -f compose.instagib_ffa_pql.yml` prefix for the
+other lifecycle commands too (`logs`, `down`, …). Running plain `docker compose
+up -d` starts the FFA server only.
+
 ## Configuration layout
+
+Each server keeps its config in its own directory ([ffa/](ffa/),
+[instagib_ffa_pql/](instagib_ffa_pql/)) with the same file layout. The table
+below shows the FFA server; the instagib server mirrors it.
 
 | File | Purpose |
 |------|---------|
-| [compose.yml](compose.yml) | Services, ports, volumes |
+| [compose.yml](compose.yml) | FFA service + shared `workshop`/`redis` services, volumes |
+| [compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) | Adds the instagib server (merge on top of `compose.yml`) |
 | [ffa/server.cfg](ffa/server.cfg) | QLDS standards base config (Redis, floodprotect, master) |
 | [ffa/autoexec.cfg](ffa/autoexec.cfg) | Gameplay: map cycle, voting, warmup, branding, minqlx |
 | `ffa/secret.cfg` | **Secrets & personal data** (git-ignored) — passwords, `qlx_owner`, hostname, branding |
@@ -44,39 +75,52 @@ Stop with `docker compose down` (Redis data survives in the `redis` volume).
 | [ffa/mappool.txt](ffa/mappool.txt) | Map rotation pool |
 | [ffa/workshop.txt](ffa/workshop.txt) | Steam Workshop item IDs to download |
 | [ffa/minqlx-plugins/](ffa/minqlx-plugins/) | minqlx Python plugins |
-| `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime) |
+| `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime), shared by both servers |
 | [access.txt.example](access.txt.example) | Template for `access.txt` |
+
+The instagib server adds one file the FFA server does not need — a custom game
+factory, [instagib_ffa_pql/instagib_ffa_pql.factories](instagib_ffa_pql/instagib_ffa_pql.factories)
+(the PQL Instagib ruleset), mounted into `baseq3/scripts/` where Quake Live
+loads `*.factories`. It also uses a separate Redis logical database
+(`qlx_redisDatabase "1"`) so its bans and stats stay isolated from FFA.
 
 `autoexec.cfg` runs at startup and, as its **last** step, executes `secret.cfg`,
 so the values there override anything set earlier. This keeps all secrets and
-personal identifiers in a single untracked file.
+personal identifiers in a single untracked file per server.
 
 ## Secrets & personal data
 
-Nothing sensitive is committed. Everything private lives in two git-ignored
-files created from their `*.example` templates:
+Nothing sensitive is committed. Everything private lives in git-ignored files
+created from their `*.example` templates:
 
-**`ffa/secret.cfg`**
+**`ffa/secret.cfg`** and **`instagib_ffa_pql/secret.cfg`** (one per server)
 - `zmq_rcon_password` / `zmq_stats_password` — rcon & stats API passwords
 - `sv_privatePassword` — password for the reserved player slots
 - `qlx_owner` — your SteamID64 (minqlx refuses admin commands without it)
 - `sv_hostname`, `qlx_serverBrandTopField`, `qlx_serverBrandBottomField` — server name & branding
 
-**`access.txt`**
+Give each server a distinct `sv_hostname` so they are told apart in the server
+browser.
+
+**`access.txt`** (shared by both servers)
 - Your SteamID64 marked as `admin`
 
 Find your SteamID64 at [steamid.io](https://steamid.io/).
 
 ## Ports
 
-| Port | Proto | Purpose |
-|------|-------|---------|
-| 27960 | UDP | Game traffic |
-| 27960 | TCP | ZMQ stats |
-| 28960 | TCP | ZMQ rcon |
+| Server | Port | Proto | Purpose |
+|--------|------|-------|---------|
+| `ffa` | 27960 | UDP | Game traffic |
+| `ffa` | 27960 | TCP | ZMQ stats |
+| `ffa` | 28960 | TCP | ZMQ rcon |
+| `instagib_ffa_pql` | 27961 | UDP | Game traffic |
+| `instagib_ffa_pql` | 27961 | TCP | ZMQ stats |
+| `instagib_ffa_pql` | 28961 | TCP | ZMQ rcon |
 
-Adjust the mappings in [compose.yml](compose.yml) if you run multiple servers or
-need different external ports.
+Adjust the mappings in [compose.yml](compose.yml) /
+[compose.instagib_ffa_pql.yml](compose.instagib_ffa_pql.yml) if you need
+different external ports.
 
 ## Maps & Steam Workshop
 
@@ -146,6 +190,9 @@ To re-check after changing settings, click the port on that page (it prefills
 `server:port`), enter only the current ZMQ Stats Password and submit again. A
 `can't connect` error usually means `zmq_stats_enable` is not `1`, the port is
 closed, or the password / ip / port do not match.
+
+Register each server separately: the instagib server uses **TCP 27961** and the
+`zmq_stats_password` from `instagib_ffa_pql/secret.cfg`.
 
 ## Data & persistence
 

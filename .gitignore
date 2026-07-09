@@ -1,6 +1,7 @@
 # --- Secrets & personal data -------------------------------------------------
 # Local, untracked. Copy the matching *.example file and fill in your values.
 ffa/secret.cfg
+instagib_ffa_pql/secret.cfg
 access.txt
 
 # --- Steam Workshop content --------------------------------------------------
@@ -8,6 +9,7 @@ access.txt
 # the `steamapps` Docker volume, so no content lives in the working tree. This
 # guard catches any stray local steamcmd cache placed here by mistake.
 ffa/steamapps/
+instagib_ffa_pql/steamapps/
 
 # --- Redis backups -----------------------------------------------------------
 # Database snapshots from scripts/backup-redis.sh — may contain player data.

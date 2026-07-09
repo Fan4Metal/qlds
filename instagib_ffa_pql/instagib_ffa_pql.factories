@@ -1,0 +1,32 @@
+{
+    "cvars":{
+        "dmflags": "52",
+        "timelimit": "15",
+        "fraglimit": "50",
+        "g_overtime": "0",
+        "g_itemTimers": "0",
+        "g_knockback_z": "40",
+        "g_max_knockback": "160",
+        "g_respawn_delay_max": "3500",
+        "g_respawn_delay_min": "500",
+        "g_startingHealthBonus": "0",
+        "g_startingWeapons":"65",
+        "g_instaGib": "1",
+        "g_railJump": "475",
+        "weapon_reload_rg":"1250",
+        "pmove_AirControl": "1",
+        "pmove_RampJump": "1",
+        "pmove_WeaponRaiseTime": "0",
+        "pmove_WeaponDropTime": "0",
+        "pmove_BunnyHop": "0",
+        "pmove_CrouchStepJump": "0",
+        "pmove_JumpTimeDeltaMin": "50",
+        "pmove_WaterSwimScale": "0.5f",
+        "pmove_WaterWadeScale": "0.75f"
+    },
+    "basegt": "ffa",
+    "id":"instagib_ffa_pql",
+    "title":"PQL Instagib FFA",
+    "author":"More Gametypes",
+    "description":"Instagib FFA with the PQL ruleset."
+}
