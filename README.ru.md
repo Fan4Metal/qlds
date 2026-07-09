@@ -6,7 +6,7 @@
 в Docker. Собраны на базе образа
 [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 с плагинами [minqlx](https://github.com/MinoMino/minqlx) и хранилищем Redis.
-Предусмотрено два сервера с общими Redis и volume'ом Steam Workshop:
+Предусмотрено несколько серверов с общими Redis и volume'ом Steam Workshop:
 
 | Сервер | Режим | Конфиг | Профиль |
 |--------|-------|--------|---------|
@@ -14,7 +14,7 @@
 | `instagib_ffa_pql` | PQL Instagib FFA (кастомная фабрика) | [instagib_ffa_pql/](instagib_ffa_pql/) | `instagib` (или `ffa_all`, `all`) |
 | `duel` | Duel (сток, без модификаций геймплея) | [duel/](duel/) | `duel` (или `all`) |
 
-Все три сервера описаны в [compose.yml](compose.yml) и закрыты профилями Compose:
+Все серверы описаны в [compose.yml](compose.yml) и закрыты профилями Compose:
 `ffa`, `instagib`, `duel` (по одному серверу), `ffa_all` (оба FFA-сервера) либо
 `all` (все сразу). Какие из них стартуют по умолчанию, задаётся через
 `COMPOSE_PROFILES` в [.env](.env) — по умолчанию `ffa` (см.
@@ -37,7 +37,7 @@ cp access.txt.example access.txt
 # 2. Отредактировать файлы secret.cfg -> пароли, SteamID64 (qlx_owner), имя сервера
 # 3. Отредактировать access.txt        -> SteamID64 как admin
 
-# 4. Запустить (добавление инстагиб-сервера — см. «Запуск обоих серверов»)
+# 4. Запустить (поднимет только FFA; остальные серверы — см. «Запуск серверов»)
 docker compose up -d
 
 # Логи / наблюдение за запуском
@@ -58,7 +58,7 @@ docker compose --profile ffa up -d          # только FFA
 docker compose --profile instagib up -d     # только инстагиб
 docker compose --profile duel up -d         # только duel
 docker compose --profile ffa_all up -d      # оба FFA-сервера (ffa + instagib)
-docker compose --profile all up -d          # все три
+docker compose --profile all up -d          # все серверы
 ```
 
 Что поднимает обычный `docker compose up -d` (без `--profile`), задаётся через
@@ -84,16 +84,16 @@ CLI-флаг `--profile` перекрывает значение из `.env`. В
 
 | Файл | Назначение |
 |------|-----------|
-| [compose.yml](compose.yml) | Оба сервиса-сервера (каждый под своим профилем Compose), общие `workshop`/`redis`, volume'ы |
+| [compose.yml](compose.yml) | Все сервисы-серверы (каждый под своим профилем Compose), общие `workshop`/`redis`, volume'ы |
 | [.env](.env) | Профили Compose по умолчанию — какие серверы поднимает обычный `docker compose up` |
 | [ffa/server.cfg](ffa/server.cfg) | Базовый конфиг QLDS (Redis, floodprotect, master) |
 | [ffa/autoexec.cfg](ffa/autoexec.cfg) | Геймплей: ротация карт, голосования, warmup, брендинг, minqlx |
 | `ffa/secret.cfg` | **Секреты и личные данные** (не в git) — пароли, `qlx_owner`, имя сервера, брендинг |
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Шаблон для `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Пул карт ротации |
-| [workshop.txt](workshop.txt) | ID предметов Steam Workshop для загрузки, **общий для обоих серверов** |
-| [minqlx-plugins/](minqlx-plugins/) | Python-плагины minqlx, **общие для обоих серверов** |
-| `access.txt` | Список admin / mod / ban (не в git; сервер правит его в рантайме), общий для обоих серверов |
+| [workshop.txt](workshop.txt) | ID предметов Steam Workshop для загрузки, **общий для всех серверов** |
+| [minqlx-plugins/](minqlx-plugins/) | Python-плагины minqlx, **общие для всех серверов** |
+| `access.txt` | Список admin / mod / ban (не в git; сервер правит его в рантайме), общий для всех серверов |
 | [access.txt.example](access.txt.example) | Шаблон для `access.txt` |
 
 У инстагиб-сервера есть один файл, которого нет у FFA, — кастомная игровая
@@ -118,11 +118,12 @@ git-ignored файлах, создаваемых из шаблонов `*.exampl
 - `sv_privatePassword` — пароль зарезервированных слотов
 - `qlx_owner` — SteamID64 владельца (без него minqlx не выполняет админ-команды)
 - `sv_hostname`, `qlx_serverBrandTopField`, `qlx_serverBrandBottomField` — имя и брендинг сервера
+- `sv_tags` (опционально, по умолчанию закомментировано) — доп. теги в браузере серверов
 
 Каждому серверу стоит задать свой `sv_hostname`, чтобы они различались в браузере
 серверов.
 
-**`access.txt`** (общий для обоих серверов)
+**`access.txt`** (общий для всех серверов)
 - SteamID64 владельца с пометкой `admin`
 
 SteamID64 можно узнать на [steamid.io](https://steamid.io/).
@@ -187,8 +188,8 @@ SteamID64 можно узнать на [steamid.io](https://steamid.io/).
 
 ## Статистика и ELO (qlstats.net)
 
-[qlstats.net](https://qlstats.net) собирает статистику игроков и даёт FFA ELO,
-который плагин `balance` использует для `!elo` и балансировки. Конфиг уже
+[qlstats.net](https://qlstats.net) собирает статистику игроков и даёт ELO по
+режимам, который плагин `balance` использует для `!elo` и балансировки. Конфиг уже
 настроен на него (`qlx_balanceUrl "qlstats.net"`, `qlx_balanceUseLocal "0"`), но
 сервер нужно **зарегистрировать**, чтобы фидер qlstats подключился к нему и начал
 собирать статистику.

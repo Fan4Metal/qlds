@@ -6,7 +6,7 @@ Dockerized [Quake Live](https://store.steampowered.com/app/282440/Quake_Live/)
 dedicated servers, built on the
 [Quake Live Server Standards](https://github.com/quakelive-server-standards/quakelive-server-standards)
 image with [minqlx](https://github.com/MinoMino/minqlx) plugins and a Redis
-backend. Two servers are provided, sharing one Redis and one Steam Workshop
+backend. Multiple servers are provided, sharing one Redis and one Steam Workshop
 volume:
 
 | Server | Ruleset | Config | Profile |
@@ -15,7 +15,7 @@ volume:
 | `instagib_ffa_pql` | PQL Instagib FFA (custom factory) | [instagib_ffa_pql/](instagib_ffa_pql/) | `instagib` (or `ffa_all`, `all`) |
 | `duel` | Duel (stock, no gameplay mods) | [duel/](duel/) | `duel` (or `all`) |
 
-All three servers are defined in [compose.yml](compose.yml) and gated by Compose
+All servers are defined in [compose.yml](compose.yml) and gated by Compose
 profiles: `ffa`, `instagib`, `duel` (one server each), `ffa_all` (both FFA
 servers), or `all` (every server). Which ones start by default is set by
 `COMPOSE_PROFILES` in [.env](.env) — shipped as `ffa` (see
@@ -38,7 +38,7 @@ cp access.txt.example access.txt
 # 2. Edit the secret.cfg files -> set passwords, your SteamID64 (qlx_owner) and hostname
 # 3. Edit access.txt           -> set your SteamID64 as admin
 
-# 4. Start it (see "Running both servers" to add the instagib server)
+# 4. Start it (this starts FFA only; see "Running the servers" for the others)
 docker compose up -d
 
 # View logs / follow startup
@@ -59,7 +59,7 @@ docker compose --profile ffa up -d          # FFA only
 docker compose --profile instagib up -d     # instagib only
 docker compose --profile duel up -d         # duel only
 docker compose --profile ffa_all up -d      # both FFA servers (ffa + instagib)
-docker compose --profile all up -d          # all three
+docker compose --profile all up -d          # every server
 ```
 
 The default for a plain `docker compose up -d` (no `--profile`) comes from
@@ -86,16 +86,16 @@ the FFA server; the other servers mirror it.
 
 | File | Purpose |
 |------|---------|
-| [compose.yml](compose.yml) | Both server services (each behind a Compose profile), shared `workshop`/`redis`, volumes |
+| [compose.yml](compose.yml) | All game-server services (each behind a Compose profile), shared `workshop`/`redis`, volumes |
 | [.env](.env) | Default Compose profiles — which servers a plain `docker compose up` starts |
 | [ffa/server.cfg](ffa/server.cfg) | QLDS standards base config (Redis, floodprotect, master) |
 | [ffa/autoexec.cfg](ffa/autoexec.cfg) | Gameplay: map cycle, voting, warmup, branding, minqlx |
 | `ffa/secret.cfg` | **Secrets & personal data** (git-ignored) — passwords, `qlx_owner`, hostname, branding |
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Template for `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Map rotation pool |
-| [workshop.txt](workshop.txt) | Steam Workshop item IDs to download, **shared by both servers** |
-| [minqlx-plugins/](minqlx-plugins/) | minqlx Python plugins, **shared by both servers** |
-| `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime), shared by both servers |
+| [workshop.txt](workshop.txt) | Steam Workshop item IDs to download, **shared by all servers** |
+| [minqlx-plugins/](minqlx-plugins/) | minqlx Python plugins, **shared by all servers** |
+| `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime), shared by all servers |
 | [access.txt.example](access.txt.example) | Template for `access.txt` |
 
 The instagib server adds one file the FFA server does not need — a custom game
@@ -120,11 +120,12 @@ created from their `*.example` templates:
 - `sv_privatePassword` — password for the reserved player slots
 - `qlx_owner` — your SteamID64 (minqlx refuses admin commands without it)
 - `sv_hostname`, `qlx_serverBrandTopField`, `qlx_serverBrandBottomField` — server name & branding
+- `sv_tags` (optional, commented out by default) — extra server-browser tags
 
 Give each server a distinct `sv_hostname` so they are told apart in the server
 browser.
 
-**`access.txt`** (shared by both servers)
+**`access.txt`** (shared by all servers)
 - Your SteamID64 marked as `admin`
 
 Find your SteamID64 at [steamid.io](https://steamid.io/).
@@ -189,8 +190,8 @@ access via in-game commands once it's running.
 
 ## Stats & ELO (qlstats.net)
 
-[qlstats.net](https://qlstats.net) tracks player stats and provides the FFA ELO
-that the `balance` plugin uses for `!elo` and team balancing. The config already
+[qlstats.net](https://qlstats.net) tracks player stats and provides the
+per-gametype ELO that the `balance` plugin uses for `!elo` and team balancing. The config already
 points at it (`qlx_balanceUrl "qlstats.net"`, `qlx_balanceUseLocal "0"`), but the
 server must be **registered** so the qlstats feeder connects to it and collects
 live stats.
