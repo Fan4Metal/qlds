@@ -8,7 +8,7 @@ set -euo pipefail
 
 APPID=282440
 INSTALL_DIR=/data                      # steamcmd writes to $INSTALL_DIR/steamapps/...
-WORKSHOP_TXT=/workshop.txt             # mounted from ffa/workshop.txt
+WORKSHOP_TXT=/workshop.txt             # mounted from ./workshop.txt (shared)
 TARGET_ROOT=/data/steamapps/workshop   # this path lives in the `steamapps` volume
 
 # --- Locate steamcmd ---------------------------------------------------------

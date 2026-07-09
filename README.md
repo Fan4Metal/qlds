@@ -70,8 +70,10 @@ it explicitly with `docker compose --profile instagib down` (or
 ## Configuration layout
 
 Each server keeps its config in its own directory ([ffa/](ffa/),
-[instagib_ffa_pql/](instagib_ffa_pql/)) with the same file layout. The table
-below shows the FFA server; the instagib server mirrors it.
+[instagib_ffa_pql/](instagib_ffa_pql/)) with the same file layout; the
+[minqlx-plugins/](minqlx-plugins/) directory, [workshop.txt](workshop.txt) and
+`access.txt` are shared. The table below shows the FFA server; the instagib
+server mirrors it.
 
 | File | Purpose |
 |------|---------|
@@ -81,8 +83,8 @@ below shows the FFA server; the instagib server mirrors it.
 | `ffa/secret.cfg` | **Secrets & personal data** (git-ignored) — passwords, `qlx_owner`, hostname, branding |
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Template for `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Map rotation pool |
-| [ffa/workshop.txt](ffa/workshop.txt) | Steam Workshop item IDs to download |
-| [ffa/minqlx-plugins/](ffa/minqlx-plugins/) | minqlx Python plugins |
+| [workshop.txt](workshop.txt) | Steam Workshop item IDs to download, **shared by both servers** |
+| [minqlx-plugins/](minqlx-plugins/) | minqlx Python plugins, **shared by both servers** |
 | `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime), shared by both servers |
 | [access.txt.example](access.txt.example) | Template for `access.txt` |
 
@@ -133,7 +135,7 @@ ports.
 
 - The rotation pool is [ffa/mappool.txt](ffa/mappool.txt) (one `map|factory` per line).
 - Custom maps come from the Steam Workshop; their IDs are listed in
-  [ffa/workshop.txt](ffa/workshop.txt).
+  [workshop.txt](workshop.txt).
 
 ### How downloading works
 

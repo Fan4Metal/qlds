@@ -9,7 +9,7 @@ services:
     restart: "no"
     volumes:
       - steamapps:/data/steamapps
-      - ./ffa/workshop.txt:/workshop.txt:ro
+      - ./workshop.txt:/workshop.txt:ro
       - ./scripts/download-workshop.sh:/download-workshop.sh:ro
 
   ffa:
@@ -27,8 +27,10 @@ services:
       - ./ffa/secret.cfg:/home/steam/ql/baseq3/secret.cfg:ro
       - ./ffa/server.cfg:/home/steam/ql/baseq3/server.cfg:ro
       - ./ffa/mappool.txt:/home/steam/ql/baseq3/mappool.txt:ro
-      - ./ffa/minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
-      - ./ffa/workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
+      # minqlx plugins are shared by both servers (see ./minqlx-plugins).
+      - ./minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
+      # Shared workshop list — the `workshop` init service downloads exactly this.
+      - ./workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
       # Workshop content pre-fetched by the `workshop` service (read-only here).
       # The steamcmd-written manifest marks the items as installed, so the QL
       # server skips its own (unreliable) download.
@@ -59,8 +61,10 @@ services:
       - ./instagib_ffa_pql/secret.cfg:/home/steam/ql/baseq3/secret.cfg:ro
       - ./instagib_ffa_pql/server.cfg:/home/steam/ql/baseq3/server.cfg:ro
       - ./instagib_ffa_pql/mappool_instagib_ffa_pql.txt:/home/steam/ql/baseq3/mappool.txt:ro
-      - ./instagib_ffa_pql/minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
-      - ./instagib_ffa_pql/workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
+      # Shared with the ffa server (see ./minqlx-plugins).
+      - ./minqlx-plugins:/home/steam/ql/minqlx-plugins:ro
+      # Same shared workshop list as ffa (downloaded by the `workshop` service).
+      - ./workshop.txt:/home/steam/ql/baseq3/workshop.txt:ro
       # Custom game factory: QL loads *.factories from baseq3/scripts/.
       - ./instagib_ffa_pql/instagib_ffa_pql.factories:/home/steam/ql/baseq3/scripts/instagib_ffa_pql.factories:ro
       - steamapps:/home/steam/ql/steamapps:ro

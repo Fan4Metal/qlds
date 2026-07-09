@@ -69,8 +69,9 @@ compose up -d` без профиля **не останавливает** уже 
 ## Структура конфигурации
 
 Конфиг каждого сервера лежит в своём каталоге ([ffa/](ffa/),
-[instagib_ffa_pql/](instagib_ffa_pql/)) с одинаковой структурой файлов. В таблице
-ниже — FFA-сервер; инстагиб-сервер устроен так же.
+[instagib_ffa_pql/](instagib_ffa_pql/)) с одинаковой структурой файлов; каталог
+[minqlx-plugins/](minqlx-plugins/), [workshop.txt](workshop.txt) и `access.txt` —
+общие. В таблице ниже — FFA-сервер; инстагиб-сервер устроен так же.
 
 | Файл | Назначение |
 |------|-----------|
@@ -80,8 +81,8 @@ compose up -d` без профиля **не останавливает** уже 
 | `ffa/secret.cfg` | **Секреты и личные данные** (не в git) — пароли, `qlx_owner`, имя сервера, брендинг |
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Шаблон для `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Пул карт ротации |
-| [ffa/workshop.txt](ffa/workshop.txt) | ID предметов Steam Workshop для загрузки |
-| [ffa/minqlx-plugins/](ffa/minqlx-plugins/) | Python-плагины minqlx |
+| [workshop.txt](workshop.txt) | ID предметов Steam Workshop для загрузки, **общий для обоих серверов** |
+| [minqlx-plugins/](minqlx-plugins/) | Python-плагины minqlx, **общие для обоих серверов** |
 | `access.txt` | Список admin / mod / ban (не в git; сервер правит его в рантайме), общий для обоих серверов |
 | [access.txt.example](access.txt.example) | Шаблон для `access.txt` |
 
@@ -132,7 +133,7 @@ SteamID64 можно узнать на [steamid.io](https://steamid.io/).
 
 - Пул ротации — [ffa/mappool.txt](ffa/mappool.txt) (по строке `карта|фабрика`).
 - Кастомные карты берутся из Steam Workshop; их ID перечислены в
-  [ffa/workshop.txt](ffa/workshop.txt).
+  [workshop.txt](workshop.txt).
 
 ### Как работает загрузка
 
