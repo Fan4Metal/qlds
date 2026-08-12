@@ -94,7 +94,7 @@ the FFA server; the other servers mirror it.
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Template for `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Map rotation pool |
 | [workshop.txt](workshop.txt) | Steam Workshop item IDs to download, **shared by all servers** |
-| [minqlx-plugins/](minqlx-plugins/) | minqlx Python plugins, **shared by all servers** |
+| [minqlx-plugins/](minqlx-plugins/) | minqlx Python plugins, **shared by all servers** (duel skips `weaponspawnfixer`, `uberstats`, `pummel`) |
 | `access.txt` | admin / mod / ban list (git-ignored; also modified by the server at runtime), shared by all servers |
 | [access.txt.example](access.txt.example) | Template for `access.txt` |
 
@@ -102,7 +102,16 @@ The instagib server adds one file the FFA server does not need — a custom game
 factory, [instagib_ffa_pql/instagib_ffa_pql.factories](instagib_ffa_pql/instagib_ffa_pql.factories)
 (the PQL Instagib ruleset), mounted into `baseq3/scripts/` where Quake Live
 loads `*.factories`. The duel server needs no such file — it runs the **stock
-`duel` factory** with no gameplay cvars, so it plays vanilla. Each server uses a
+`duel` factory** with no gameplay cvars, so it plays vanilla. For the same
+reason it is the only server that pins its plugin list: `qlx_plugins` in
+[duel/autoexec.cfg](duel/autoexec.cfg) loads every shared plugin *except* three
+that do not suit a stock 1v1 — `weaponspawnfixer` (forces the weapon respawn
+time to `g_weaponrespawn`, set to `1` on the FFA servers only, overriding what
+the stock `duel` factory defines), `uberstats` (spree banners in the middle of
+the screen and FFA-oriented end-of-match awards) and `pummel` (repeats the
+humiliation sound and a chat line the game announces anyway). A plugin added to
+[minqlx-plugins/](minqlx-plugins/) later has to be added to that list as well,
+otherwise the duel server does not load it. Each server uses a
 separate Redis logical database (`qlx_redisDatabase` = `0` for FFA, `1` for
 instagib, `2` for duel) so bans and stats stay isolated.
 

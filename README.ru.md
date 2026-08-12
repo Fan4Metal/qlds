@@ -92,7 +92,7 @@ CLI-флаг `--profile` перекрывает значение из `.env`. В
 | [ffa/secret.cfg.example](ffa/secret.cfg.example) | Шаблон для `secret.cfg` |
 | [ffa/mappool.txt](ffa/mappool.txt) | Пул карт ротации |
 | [workshop.txt](workshop.txt) | ID предметов Steam Workshop для загрузки, **общий для всех серверов** |
-| [minqlx-plugins/](minqlx-plugins/) | Python-плагины minqlx, **общие для всех серверов** |
+| [minqlx-plugins/](minqlx-plugins/) | Python-плагины minqlx, **общие для всех серверов** (duel пропускает `weaponspawnfixer`, `uberstats`, `pummel`) |
 | `access.txt` | Список admin / mod / ban (не в git; сервер правит его в рантайме), общий для всех серверов |
 | [access.txt.example](access.txt.example) | Шаблон для `access.txt` |
 
@@ -101,6 +101,16 @@ CLI-флаг `--profile` перекрывает значение из `.env`. В
 (правила PQL Instagib). Она монтируется в `baseq3/scripts/`, откуда Quake Live
 грузит `*.factories`. Duel-серверу такой файл не нужен — он использует **стоковую
 фабрику `duel`** без геймплейных cvar'ов, поэтому играется как ванильный дуэль.
+По той же причине это единственный сервер с фиксированным списком плагинов:
+`qlx_plugins` в [duel/autoexec.cfg](duel/autoexec.cfg) загружает все общие
+плагины, *кроме* трёх, неуместных в стоковом 1v1: `weaponspawnfixer`
+(принудительно выставляет время респавна оружия по `g_weaponrespawn`, заданному
+значением `1` только на FFA-серверах, и перекрыл бы то, что определяет стоковая
+фабрика `duel`), `uberstats` (надписи о сериях по центру экрана и рассчитанные
+на FFA награды в конце матча) и `pummel` (дублирует звук humiliation и
+сообщение в чат, о которых игра сообщает сама). Плагин, добавленный позже в
+[minqlx-plugins/](minqlx-plugins/), требуется дописать и в этот список, иначе
+duel-сервер его не загрузит.
 У каждого сервера своя логическая база Redis (`qlx_redisDatabase` = `0` для FFA,
 `1` для инстагиба, `2` для duel), поэтому баны и статистика изолированы.
 
