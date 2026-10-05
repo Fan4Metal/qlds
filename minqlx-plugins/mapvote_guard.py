@@ -11,7 +11,7 @@ the previous map change crashes qzeroded with a segfault inside qagame
 
 Cvars:
     qlx_mapVoteGuardDelay - seconds after map load during which map votes
-                            are rejected. 0 disables the plugin. Default: 30
+                            are rejected. 0 disables the plugin. Default: 20
 """
 
 import time
@@ -23,7 +23,7 @@ GUARDED_VOTES = ("map", "nextmap")
 
 class mapvote_guard(minqlx.Plugin):
     def __init__(self):
-        self.set_cvar_once("qlx_mapVoteGuardDelay", "30")
+        self.set_cvar_once("qlx_mapVoteGuardDelay", "20")
 
         self.add_hook("map", self.handle_map)
         self.add_hook("vote_called", self.handle_vote_called)
